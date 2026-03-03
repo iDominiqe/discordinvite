@@ -1,4 +1,4 @@
-widgetURL = "https://discord.com/api/guilds/1234/widget.json";
+widgetURL = "https://discord.com/api/guilds/1476569960305393676/widget.json";
 
 function card(e, val, rand) {
   e += '<div class="card" style="--duration:' + rand + 's">';
