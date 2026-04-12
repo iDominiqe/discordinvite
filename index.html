@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Links</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f 0%, #0d0d14 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px rgba(255, 255, 255, 0.1) solid;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 300px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 300;
+        }
+
+        .link-button {
+            display: block;
+            margin: 15px 0;
+            padding: 12px;
+            text-decoration: none;
+            color: white;
+            border-radius: 10px;
+            transition: transform 0.2s, background 0.3s;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Цвета для разных кнопок */
+        .discord {
+            background: #5865F2;
+        }
+        .discord:hover {
+            background: #4752c4;
+            transform: translateY(-3px);
+        }
+
+        .telegram {
+            background: #0088cc;
+        }
+        .telegram:hover {
+            background: #0077b5;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Присоединяйся к нам</h1>
+        
+        <a href="https://discord.gg/UhCMV4zFSC" target="_blank" class="link-button discord">Guarded Squad</a>
+        <a href="https://discord.gg/4vGqpzGTQS" target="_blank" class="link-button discord">Nightfall Apothic</a>
+        <a href="ТВОЯ_ССЫЛКА_ТЕЛЕГРАМ" target="_blank" class="link-button telegram">Guarded Squad Telegram</a>
+    </div>
+
+</body>
+</html>
