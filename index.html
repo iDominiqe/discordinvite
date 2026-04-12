@@ -3,76 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Links</title>
+    <title>Windows XP Retro Desktop</title>
     <style>
-        body {
+        /* ОСНОВНЫЕ СТИЛИ (ФОН И СБРОС) */
+        body, html {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e1e2f 0%, #0d0d14 100%);
+            height: 100%;
+            overflow: hidden; /* Запрещаем скролл самого "рабочего стола" */
+            font-family: Tahoma, 'Segoe UI', sans-serif; /* Классический шрифт XP */
+            /* Стандартный фон Windows XP "Bliss" */
+            background: #004EAE url('https://winxp.at.ua/img/stoly/wallpaper/Bliss.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* РАБОЧИЙ СТОЛ И ЯРЛЫКИ */
+        #desktop {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 30px; /* Оставляем место для панели задач */
+            padding: 20px;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
         }
 
-        .container {
+        .icon {
+            width: 70px;
             text-align: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px rgba(255, 255, 255, 0.1) solid;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            width: 300px;
-        }
-
-        h1 {
-            margin-bottom: 30px;
-            font-size: 24px;
-            font-weight: 300;
-        }
-
-        .link-button {
-            display: block;
-            margin: 15px 0;
-            padding: 12px;
-            text-decoration: none;
+            cursor: pointer;
+            text-decoration: none; /* Убираем подчеркивание ссылок */
             color: white;
-            border-radius: 10px;
-            transition: transform 0.2s, background 0.3s;
-            font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-shadow: 1px 1px 1px black; /* Чтобы текст читался на любом фоне */
         }
 
-        /* Цвета для разных кнопок */
-        .discord {
-            background: #5865F2;
-        }
-        .discord:hover {
-            background: #4752c4;
-            transform: translateY(-3px);
+        .icon img {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 5px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .telegram {
-            background: #0088cc;
+        .icon:hover {
+            outline: 1px solid rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.2);
         }
-        .telegram:hover {
-            background: #0077b5;
-            transform: translateY(-3px);
+
+        .icon-text {
+            font-size: 11px;
+            word-wrap: break-word;
         }
+
+        /* ПАНЕЛЬ ЗАДАЧ */
+        #taskbar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 30px;
+            background: linear-gradient(to bottom, #245edb 0%, #3f8cf3 9%, #245edb 18%, #245edb 92%, #1941a5 100%);
+            border-top: 1px solid #1941a5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+            z-index: 1000; /* Всегда сверху */
+        }
+
+        #start-button {
+            height: 100%;
+            padding: 0 15px;
+            background: linear-gradient(to bottom, #388e3c 0%, #4caf50 10%, #388e3c 20%, #388e3c 90%, #2e7d32 100%);
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            font-style: italic;
+            cursor: pointer;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+        }
+
+        #start-button:hover {
+            filter: brightness(1.1);
+        }
+
+        #system-tray {
+            color: white;
+            font-size: 12px;
+            padding-right: 10px;
+        }
+
+        /* МЕНЮ ПУСК */
+        #start-menu {
+            position: absolute;
+            bottom: 30px; /* Сразу над панелью задач */
+            left: 0;
+            width: 250px;
+            background-color: white;
+            border: 2px solid #245edb;
+            border-radius: 5px 5px 0 0;
+            box-shadow: 2px -2px 10px rgba(0,0,0,0.3);
+            display: none; /* Скрыто по умолчанию */
+            z-index: 999;
+        }
+
+        #start-menu-header {
+            background: linear-gradient(to bottom, #3f8cf3 0%, #245edb 100%);
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #start-menu-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #start-menu-content li {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: black;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        #start-menu-content li:hover {
+            background-color: #316ac5;
+            color: white;
+        }
+
+        .menu-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        /* ОКНА ПРИЛОЖЕНИЙ */
+        .window {
+            position: absolute;
+            width: 400px;
+            height: 300px;
+            background-color: #f0f0f0;
+            border: 3px solid #004EAE;
+            border-radius: 5px 5px 0 0;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+            display: none; /* Скрыты по умолчанию */
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .window-title-bar {
+            height: 25px;
+            background: linear-gradient(to bottom, #0058e6 0%, #3f8cf3 9%, #004EAE 18%, #004EAE 92%, #001a4d 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: move; /* Курсор для перетаскивания (не реализовано на JS) */
+        }
+
+        .window-controls button {
+            width: 20px;
+            height: 20px;
+            margin-left: 2px;
+            background-color: #e0e0e0;
+            border: 1px solid #707070;
+            border-radius: 2px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .window-controls button.close {
+            background-color: #c42c1c;
+            color: white;
+            border-color: #9c1f14;
+        }
+
+        .window-controls button:hover {
+            filter: brightness(1.1);
+        }
+
+        .window-body {
+            padding: 10px;
+            font-size: 12px;
+            color: black;
+            height: calc(100% - 45px); /* Минус заголовок */
+            overflow: auto;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Присоединяйся к нам</h1>
-        
-        <a href="https://discord.gg/UhCMV4zFSC" target="_blank" class="link-button discord">Guarded Squad</a>
-        <a href="https://discord.gg/4vGqpzGTQS" target="_blank" class="link-button discord">Nightfall Apothic</a>
-        <a href="ТВОЯ_ССЫЛКА_ТЕЛЕГРАМ" target="_blank" class="link-button telegram">Guarded Squad Telegram</a>
+    <div id="desktop">
+        <a href="ТВОЯ_ССЫЛКА_ДИСКОРД_1" target="_blank" class="icon">
+            <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf12756615c44f_icon_clyde_blurple_RGB.png" alt="Discord">
+            <span class="icon-text">Discord Чат 1</span>
+        </a>
+
+        <a href="ТВОЯ_ССЫЛКА_ДИСКОРД_2" target="_blank" class="icon">
+            <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf12756615c44f_icon_clyde_blurple_RGB.png" alt="Discord">
+            <span class="icon-text">Discord Канал 2</span>
+        </a>
+
+        <a href="ТВОЯ_ССЫЛКА_ТЕЛЕГРАМ" target="_blank" class="icon">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/2048px-Telegram_logo.svg.png" alt="Telegram">
+            <span class="icon-text">Telegram Группа</span>
+        </a>
     </div>
+
+    <div id="start-menu">
+        <div id="start-menu-header">Administrator</div>
+        <div id="start-menu-content">
+            <ul>
+                <li onclick="openApp('window-browser')">
+                    <img src="https://winxp.at.ua/img/stoly/wallpaper/Internet_Explorer_6.png" class="menu-icon" alt="IE">
+                    Интернет Браузер
+                </li>
+                <li onclick="openApp('window-calc')">
+                    <img src="https://www.google.com/s2/favicons?domain=google.com" class="menu-icon" style="filter: grayscale(1);" alt="Calc">
+                    Калькулятор
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="taskbar">
+        <button id="start-button" onclick="toggleStartMenu()">Пуск</button>
+        <div id="system-tray">
+            <span id="clock">12:00</span>
+        </div>
+    </div>
+
+    <div id="window-browser" class="window" style="top: 50px; left: 50px;">
+        <div class="window-title-bar">
+            <span>Internet Explorer - Эмуляция</span>
+            <div class="window-controls">
+                <button onclick="closeApp('window-browser')" class="close">X</button>
+            </div>
+        </div>
+        <div class="window-body">
+            <h3>Добро пожаловать в Internet Explorer!</h3>
+            <p>К сожалению, это просто эмуляция окна. Настоящий браузер внутри HTML-страницы запустить сложно, но твои ссылки-ярлыки на рабочем столе работают отлично!</p>
+            <p>Для перехода на сайты используй иконки Discord и Telegram.</p>
+        </div>
+    </div>
+
+    <div id="window-calc" class="window" style="top: 100px; left: 200px; width: 250px; height: 300px;">
+        <div class="window-title-bar">
+            <span>Калькулятор (Макет)</span>
+            <div class="window-controls">
+                <button onclick="closeApp('window-calc')" class="close">X</button>
+            </div>
+        </div>
+        <div class="window-body" style="background-color: #d0d0d0; padding: 5px;">
+            <input type="text" style="width: 90%; margin: 10px; text-align: right; padding: 5px;" value="0" readonly>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 10px;">
+                <button>7</button><button>8</button><button>9</button><button>/</button>
+                <button>4</button><button>5</button><button>6</button><button>*</button>
+                <button>1</button><button>2</button><button>3</button><button>-</button>
+                <button>0</button><button>.</button><button>=</button><button>+</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ЛОГИКА МЕНЮ ПУСК
+        function toggleStartMenu() {
+            const menu = document.getElementById('start-menu');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        }
+
+        // Закрывать меню при клике по рабочему столу
+        document.getElementById('desktop').addEventListener('click', function() {
+            document.getElementById('start-menu').style.display = 'none';
+        });
+
+        // ЛОГИКА ОКОН
+        function openApp(windowId) {
+            document.getElementById(windowId).style.display = 'block';
+            toggleStartMenu(); // Закрыть меню после запуска
+        }
+
+        function closeApp(windowId) {
+            document.getElementById(windowId).style.display = 'none';
+        }
+
+        // ЛОГИКА ЧАСОВ
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock(); // Сразу установить время
+    </script>
 
 </body>
 </html>
