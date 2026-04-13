@@ -3,456 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Windows XP Professional Emulator</title>
+    <title>Windows XP Professional</title>
     <style>
-        /* --- СБРОС И ШРИФТЫ --- */
         * { box-sizing: border-box; }
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            font-family: Tahoma, 'Segoe UI', sans-serif;
-            font-size: 12px;
-            overflow: hidden; /* Запрет скролла всей страницы */
-            -webkit-user-select: none; user-select: none; /* Запрет выделения текста */
+            font-family: Tahoma, sans-serif;
+            overflow: hidden;
+            background-color: #000;
         }
 
-        /* --- ЭКРАН ЗАГРУЗКИ (BOOT SCREEN) --- */
+        /* --- 1. ЭКРАН ЗАГРУЗКИ (BOOT) --- */
         #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: black; color: white;
+            background-color: black; z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 9999; transition: opacity 0.5s ease;
         }
-        #boot-logo { width: 250px; margin-bottom: 40px; }
-        #boot-loader {
-            width: 150px; height: 15px; border: 2px solid #aaa;
-            border-radius: 4px; overflow: hidden; position: relative;
+        .xp-logo-svg { width: 300px; margin-bottom: 40px; }
+        
+        .loader-bar {
+            width: 160px; height: 18px; border: 2px solid #999;
+            border-radius: 4px; position: relative; overflow: hidden;
         }
-        #boot-progress {
-            width: 40px; height: 100%; background-color: #3366cc;
-            position: absolute; animation: moveLoader 2s infinite linear;
-            box-shadow: 0 0 5px #3366cc;
+        .loader-progress {
+            width: 45px; height: 100%;
+            background: linear-gradient(to right, #2244cc, #6688ff, #2244cc);
+            position: absolute; animation: loading 2s infinite linear;
         }
-        @keyframes moveLoader {
-            0% { left: -40px; }
-            100% { left: 150px; }
+        @keyframes loading {
+            0% { left: -45px; }
+            100% { left: 160px; }
         }
 
-        /* --- РАБОЧИЙ СТОЛ --- */
+        /* --- 2. ЭКРАН ПРИВЕТСТВИЯ (WELCOME) --- */
+        #welcome-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, #5a7edc 0%, #4a67d6 100%);
+            z-index: 9999; display: none; align-items: center;
+            border-top: 2px solid #fff;
+        }
+        .welcome-content {
+            width: 100%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 32px; font-style: italic;
+        }
+        .welcome-line {
+            width: 2px; height: 150px; background: rgba(255,255,255,0.3); margin: 0 40px;
+        }
+
+        /* --- 3. РАБОЧИЙ СТОЛ --- */
         #desktop {
             position: relative; width: 100%; height: calc(100% - 30px);
-            /* Дефолтные обои Bliss */
             background: #004EAE url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bliss_%28Windows_XP%29.png/1280px-Bliss_%28Windows_XP%29.png') no-repeat center center;
             background-size: cover;
-            padding: 10px;
-            display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start;
+            display: none; padding: 10px; flex-direction: column; flex-wrap: wrap; align-content: flex-start;
         }
 
-        /* --- ЯРЛЫКИ НА РАБОЧЕМ СТОЛЕ --- */
+        /* ЯРЛЫКИ */
         .shortcut {
-            width: 75px; height: 75px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 80px; padding: 10px 5px; margin: 5px;
+            display: flex; flex-direction: column; align-items: center;
             text-align: center; color: white; text-decoration: none;
-            cursor: pointer; margin-bottom: 15px; border: 1px solid transparent;
+            text-shadow: 1px 1px 2px #000; cursor: pointer; border: 1px solid transparent;
         }
-        .shortcut:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .shortcut:active {
-            background-color: rgba(0, 85, 229, 0.3);
-            border: 1px solid rgba(0, 85, 229, 0.5);
-        }
-        .shortcut-icon { width: 32px; height: 32px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; }
-        .shortcut-icon svg { width: 100%; height: 100%; }
-        .shortcut-label {
-            font-size: 11px; text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
-            word-wrap: break-word; max-width: 100%;
-        }
+        .shortcut:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); }
+        .shortcut svg { width: 35px; height: 35px; margin-bottom: 5px; }
 
-        /* --- ОКНА (WINDOWS) --- */
+        /* ОКНА */
         .window {
             position: absolute; width: 600px; height: 400px;
             background: #ece9d8; border: 3px solid #0055E5;
-            border-radius: 7px 7px 0 0; box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
-            display: flex; flex-direction: column;
-            min-width: 200px; min-height: 100px;
-            z-index: 10;
+            border-radius: 8px 8px 0 0; display: none; flex-direction: column;
+            z-index: 100; box-shadow: 4px 4px 15px rgba(0,0,0,0.4);
         }
-        /* Синий градиент заголовка */
         .window-header {
-            height: 25px; background: linear-gradient(to bottom, #0058e6 0%, #3f8cf3 9%, #004EAE 18%, #004EAE 92%, #001a4d 100%);
+            height: 28px; background: linear-gradient(to bottom, #0058e6 0%, #3f8cf3 9%, #004EAE 18%, #001a4d 100%);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 5px; color: white; font-weight: bold; cursor: move;
+            padding: 0 8px; color: white; font-weight: bold; cursor: move;
         }
-        .window-title { display: flex; align-items: center; gap: 5px; pointer-events: none; }
-        .window-header-icon { width: 16px; height: 16px; }
-        
-        .window-controls { display: flex; gap: 2px; }
         .window-controls button {
-            width: 21px; height: 21px; border: 1px solid #fff; border-radius: 2px;
-            cursor: pointer; font-weight: bold; font-size: 12px;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(210,210,210,1) 100%);
+            width: 21px; height: 21px; margin-left: 2px;
+            background: #eee; border: 1px solid #fff; cursor: pointer;
         }
-        .window-controls button:hover { filter: brightness(1.1); }
-        .window-controls button.close {
-            background: linear-gradient(180deg, rgba(255,165,140,1) 0%, rgba(200,50,30,1) 100%);
-            color: white; border-color: #701000;
-        }
+        .window-controls .close { background: #e81123; color: white; border-color: #701000; }
+        .window-body { flex: 1; position: relative; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; background: white; }
 
-        .window-body { flex: 1; overflow: auto; padding: 2px; position: relative; }
-
-        /* --- БРАУЗЕР IE --- */
-        .ie-container { display: flex; flex-direction: column; height: 100%; width: 100%; }
-        .ie-toolbar {
-            height: 35px; background-color: #ece9d8; border-bottom: 1px solid #999;
-            display: flex; align-items: center; padding: 0 5px; gap: 5px;
-        }
-        .ie-toolbar input { flex: 1; height: 22px; border: 1px solid #7f9db9; padding: 0 5px; }
-        .ie-toolbar button { height: 22px; cursor: pointer; }
-        .ie-iframe { flex: 1; border: 1px solid #999; background: white; }
-
-        /* --- НАСТРОЙКИ ОБОЕВ --- */
-        .wall-selector { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
-        .wall-option {
-            display: flex; align-items: center; gap: 10px; padding: 5px;
-            border: 1px solid #ccc; cursor: pointer; background: white;
-        }
-        .wall-option:hover { background-color: #e0f0ff; }
-        .wall-preview { width: 60px; height: 40px; border: 1px solid #000; background-size: cover; }
-
-        /* --- ПАНЕЛЬ ЗАДАЧ (TASKBAR) --- */
+        /* ПАНЕЛЬ ЗАДАЧ */
         #taskbar {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 30px;
-            background: linear-gradient(to bottom, #245edb 0%, #3f8cf3 9%, #245edb 18%, #245edb 92%, #1941a5 100%);
-            border-top: 1px solid #1a3b80;
+            position: fixed; bottom: 0; width: 100%; height: 30px;
+            background: linear-gradient(to bottom, #245edb 0%, #3f8cf3 10%, #245edb 20%, #1941a5 100%);
             display: flex; align-items: center; z-index: 9000;
         }
-
-        /* КНОПКА ПУСК */
-        #start-button {
-            height: 100%; width: 100px;
-            background: linear-gradient(to bottom, #388e3c 0%, #4caf50 10%, #388e3c 20%, #388e3c 90%, #2e7d32 100%);
-            border: none; border-top-right-radius: 10px; border-bottom-right-radius: 10px;
-            color: white; font-weight: bold; font-size: 15px; font-style: italic;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+        #start-btn {
+            height: 100%; width: 100px; background: linear-gradient(to bottom, #388e3c 0%, #4caf50 10%, #2e7d32 100%);
+            border: none; border-radius: 0 10px 10px 0; color: white; font-weight: bold; font-style: italic; cursor: pointer;
         }
-        #start-button:hover { filter: brightness(1.1); }
-        #start-button:active { background: linear-gradient(to bottom, #2e7d32 0%, #388e3c 100%); }
+        #clock { margin-left: auto; color: white; padding: 0 10px; background: #0c8dea; height: 100%; display: flex; align-items: center; }
 
-        /* ТРЕЙ (ЧАСЫ) */
-        #system-tray {
-            margin-left: auto; height: 100%; padding: 0 10px;
-            background: linear-gradient(to bottom, #0c8dea 0%, #245edb 100%);
-            border-left: 1px solid #1a3b80;
-            display: flex; align-items: center; color: white;
-        }
-
-        /* --- МЕНЮ ПУСК (START MENU) --- */
+        /* МЕНЮ ПУСК */
         #start-menu {
-            position: fixed; bottom: 30px; left: 0; width: 300px; height: 400px;
-            background-color: white; border: 2px solid #245edb; border-radius: 5px 5px 0 0;
-            box-shadow: 2px -2px 10px rgba(0,0,0,0.3);
-            display: none; flex-direction: column; z-index: 8999;
+            position: fixed; bottom: 30px; left: 0; width: 280px; height: 350px;
+            background: white; border: 2px solid #245edb; display: none; flex-direction: column; z-index: 9500;
         }
-        #start-header {
-            height: 50px; background: linear-gradient(to bottom, #3f8cf3 0%, #245edb 100%);
-            display: flex; align-items: center; padding: 0 10px; color: white; font-weight: bold; font-size: 14px;
-        }
-        #start-header-avatar { width: 34px; height: 34px; border: 2px solid white; border-radius: 3px; background-color: #ff9900; margin-right: 10px; }
-        
-        #start-content { flex: 1; display: flex; background-color: #dbeafe; }
-        #start-left { width: 50%; background: white; border-right: 1px solid #b5d3ff; padding: 5px 0; }
-        #start-right { width: 50%; padding: 5px 0; }
-        
-        .start-item {
-            display: flex; align-items: center; padding: 5px 10px; cursor: pointer; color: #000;
-        }
-        .start-item:hover { background-color: #316ac5; color: white; }
-        .start-icon { width: 24px; height: 24px; margin-right: 10px; display: flex; align-items: center; justify-content: center; }
-        .start-icon svg, .start-icon img { width: 100%; height: 100%; }
-
-        #start-footer {
-            height: 40px; background-color: #dbeafe; border-top: 1px solid #b5d3ff;
-            display: flex; justify-content: flex-end; align-items: center; padding: 0 10px; gap: 10px;
-        }
-        .logoff-btn {
-            background: #eee; border: 1px solid #7f9db9; padding: 3px 8px; cursor: pointer; display: flex; align-items: center; gap: 5px;
-        }
-        .logoff-btn:hover { background: #fff; }
-
-        /* Вспомогательные классы */
-        .hidden { display: none !important; }
+        .start-header { background: #245edb; color: white; padding: 10px; font-weight: bold; }
+        .start-item { padding: 10px; display: flex; align-items: center; cursor: pointer; }
+        .start-item:hover { background: #316ac5; color: white; }
     </style>
 </head>
 <body>
 
     <div id="boot-screen">
-        <img id="boot-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Windows_XP_Logo.svg/1280px-Microsoft_Windows_XP_Logo.svg.png" alt="XP Logo">
-        <div id="boot-loader">
-            <div id="boot-progress"></div>
+        <div class="xp-logo-svg">
+            <svg viewBox="0 0 450 100">
+                <text x="0" y="70" fill="white" font-family="Arial" font-weight="bold" font-size="60">Microsoft</text>
+                <text x="270" y="70" fill="white" font-family="Arial" font-size="70">XP</text>
+                <rect x="0" y="80" width="450" height="4" fill="#ff9900" />
+            </svg>
+        </div>
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
+    </div>
+
+    <div id="welcome-screen">
+        <div class="welcome-content">
+            <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" alt="XP">
+            <div class="welcome-line"></div>
+            <span>приветствие</span>
         </div>
     </div>
 
     <div id="desktop">
-        
-        <a href="https://discord.gg/your_link_1" target="_blank" class="shortcut" title="Присоединиться к Discord Серверу 1">
-            <div class="shortcut-icon">
-                <svg viewBox="0 0 127.14 96.36"><path fill="#5865F2" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83,97.68,97.68,0,0,0-29.11,0A72.06,72.06,0,0,0,45.64,0a105.89,105.89,0,0,0-26.25,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14h0C129.27,52.85,124.79,28.94,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5.12-12.67,11.41-12.67S54,46,53.86,53,48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.12-12.67,11.41-12.67S96.08,46,96,53,90.88,65.69,84.69,65.69Z"/></svg>
-            </div>
-            <div class="shortcut-label">Discord Чат 1</div>
+        <a href="https://discord.gg/link1" target="_blank" class="shortcut">
+            <svg viewBox="0 0 127 96"><path fill="#5865F2" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83,97.68,97.68,0,0,0-29.11,0A72.06,72.06,0,0,0,45.64,0a105.89,105.89,0,0,0-26.25,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14h0C129.27,52.85,124.79,28.94,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5.12-12.67,11.41-12.67S54,46,53.86,53,48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.12-12.67,11.41-12.67S96.08,46,96,53,90.88,65.69,84.69,65.69Z"/></svg>
+            <span>Discord 1</span>
         </a>
 
-        <a href="https://discord.gg/your_link_2" target="_blank" class="shortcut" title="Присоединиться к Discord Серверу 2">
-            <div class="shortcut-icon">
-                <svg viewBox="0 0 127.14 96.36"><path fill="#5865F2" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83,97.68,97.68,0,0,0-29.11,0A72.06,72.06,0,0,0,45.64,0a105.89,105.89,0,0,0-26.25,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14h0C129.27,52.85,124.79,28.94,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5.12-12.67,11.41-12.67S54,46,53.86,53,48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.12-12.67,11.41-12.67S96.08,46,96,53,90.88,65.69,84.69,65.69Z"/></svg>
-            </div>
-            <div class="shortcut-label">Discord Канал 2</div>
+        <a href="https://discord.gg/link2" target="_blank" class="shortcut">
+            <svg viewBox="0 0 127 96"><path fill="#5865F2" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83,97.68,97.68,0,0,0-29.11,0A72.06,72.06,0,0,0,45.64,0a105.89,105.89,0,0,0-26.25,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14h0C129.27,52.85,124.79,28.94,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5.12-12.67,11.41-12.67S54,46,53.86,53,48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.12-12.67,11.41-12.67S96.08,46,96,53,90.88,65.69,84.69,65.69Z"/></svg>
+            <span>Discord 2</span>
         </a>
 
-        <a href="https://t.me/your_channel" target="_blank" class="shortcut" title="Открыть Telegram канал">
-            <div class="shortcut-icon">
-                <svg viewBox="0 0 240 240"><defs><linearGradient id="a" x1="120" y1="240" x2="120" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1d93d2"/><stop offset="1" stop-color="#3cc6b5"/></linearGradient></defs><circle fill="url(#a)" cx="120" cy="120" r="120"/><path fill="#fff" d="M81.229 128.772l14.237 39.406s1.78 3.687 3.687 3.687H120l39.369-3.687s18.114-14.237 26.213-26.213 18.077-50.603 18.077-50.603-1.817-5.183-5.367-5.367c-3.627-.181-70.529 20.14-70.529 20.14s-28.09 7.373-30.82 10.975-14.717 31.96-14.717 31.96 11.231 16.592 11.231 16.592c3.627 0 10.975 7.192 10.975 7.192s-3.627 1.816-7.192 1.816-14.717 31.923-14.717 31.923-3.687.181-3.687 3.687 1.817 3.687 1.817 3.687"/></svg>
-            </div>
-            <div class="shortcut-label">Telegram Канал</div>
+        <a href="https://t.me/yourlink" target="_blank" class="shortcut">
+            <svg viewBox="0 0 240 240"><circle fill="#0088cc" cx="120" cy="120" r="120"/><path fill="#fff" d="M81 129l14 39s2 4 4 4h21l39-4s18-14 26-26 18-51 18-51-2-5-5-5-71 20-71 20-28 7-31 11-15 32-15 32z"/></svg>
+            <span>Telegram</span>
         </a>
 
-        <div id="win-ie" class="window hidden" style="top: 50px; left: 150px; z-index: 100;">
-            <div class="window-header">
-                <div class="window-title">
-                    <img src="https://winxp.at.ua/img/stoly/wallpaper/Internet_Explorer_6.png" class="window-header-icon" alt="IE">
-                    Internet Explorer
-                </div>
+        <div id="win-browser" class="window" style="top: 50px; left: 150px;">
+            <div class="window-header" onmousedown="dragStart(event, 'win-browser')">
+                <span>Internet Explorer</span>
                 <div class="window-controls">
-                    <button onclick="closeWindow('win-ie')">_</button>
-                    <button class="close" onclick="closeWindow('win-ie')">X</button>
+                    <button onclick="closeApp('win-browser')" class="close">X</button>
                 </div>
             </div>
             <div class="window-body">
-                <div class="ie-container">
-                    <div class="ie-toolbar">
-                        <button onclick="alert('Назад нельзя (эмуляция)')">◀</button>
-                        <button onclick="alert('Вперед нельзя')">▶</button>
-                        <input type="text" id="ie-url" value="https://www.wikipedia.org" onkeydown="if(event.key === 'Enter') loadIframeUrl()">
-                        <button onclick="loadIframeUrl()">Переход</button>
-                    </div>
-                    <iframe src="https://www.wikipedia.org" id="ie-frame" class="ie-iframe"></iframe>
-                </div>
+                <iframe src="https://www.wikipedia.org"></iframe>
             </div>
         </div>
+    </div>
 
-        <div id="win-wallpaper" class="window hidden" style="top: 100px; left: 200px; width: 350px; height: 350px;">
-            <div class="window-header">
-                <div class="window-title">🔧 Настройки экрана</div>
-                <div class="window-controls">
-                    <button class="close" onclick="closeWindow('win-wallpaper')">X</button>
-                </div>
-            </div>
-            <div class="window-body">
-                <div class="wall-selector">
-                    <b>Выберите обои рабочего стола:</b>
-                    
-                    <div class="wall-option" onclick="setWallpaper('bliss')">
-                        <div class="wall-preview" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bliss_%28Windows_XP%29.png/320px-Bliss_%28Windows_XP%29.png')"></div>
-                        <span>Bliss (Дефолт)</span>
-                    </div>
-
-                    <div class="wall-option" onclick="setWallpaper('autumn')">
-                        <div class="wall-preview" style="background-image: url('https://static1.srcdn.com/wordpress/wp-content/uploads/2023/11/windows-xp-autumn-wallpaper.jpg?q=50&fit=crop&w=825&dpr=1.5')"></div>
-                        <span>Autumn</span>
-                    </div>
-
-                    <div class="wall-option" onclick="setWallpaper('azul')">
-                        <div class="wall-preview" style="background-image: url('https://static1.srcdn.com/wordpress/wp-content/uploads/2023/11/windows-xp-azul-wallpaper.jpg?q=50&fit=crop&w=825&dpr=1.5')"></div>
-                        <span>Azul</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div> <div id="start-menu">
-        <div id="start-header">
-            <div id="start-header-avatar"></div>
-            Administrator
-        </div>
-        <div id="start-content">
-            <div id="start-left">
-                <div class="start-item" onclick="openWindow('win-ie')">
-                    <div class="start-icon"><img src="https://winxp.at.ua/img/stoly/wallpaper/Internet_Explorer_6.png" alt="IE"></div>
-                    Internet Explorer
-                </div>
-                <div class="start-item" onclick="alert('Программа не установлена')">
-                    <div class="start-icon">✉</div>
-                    Outlook Express
-                </div>
-            </div>
-            <div id="start-right">
-                <div class="start-item" onclick="openWindow('win-wallpaper')">
-                    <div class="start-icon">🔧</div>
-                    Обои
-                </div>
-                <div class="start-item" onclick="alert('Это веб-страница, настроек нет')">
-                    <div class="start-icon">⚙</div>
-                    Панель управления
-                </div>
-            </div>
-        </div>
-        <div id="start-footer">
-            <button class="logoff-btn" onclick="alert('До свидания!')">
-                🔒 Выход
-            </button>
-        </div>
+    <div id="start-menu">
+        <div class="start-header">Administrator</div>
+        <div class="start-item" onclick="openApp('win-browser')">🌐 Internet Explorer</div>
+        <div class="start-item" onclick="alert('Обои изменены!')">🖼 Сменить обои</div>
     </div>
 
     <div id="taskbar">
-        <button id="start-button" onclick="toggleStartMenu()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Windows_XP_Start_button_icon.svg" width="16" alt="Start">
-            пуск
-        </button>
-        <div id="system-tray">
-            <span id="clock">12:00</span>
-        </div>
+        <button id="start-btn" onclick="toggleStart()">пуск</button>
+        <div id="clock">12:00</div>
     </div>
 
     <script>
-        // --- 1. ЛОГИКА ЗАГРУЗКИ (BOOT) ---
-        window.addEventListener('load', function() {
-            // Симулируем загрузку 3 секунды
-            setTimeout(function() {
-                const bootScreen = document.getElementById('boot-screen');
-                bootScreen.style.opacity = '0';
-                setTimeout(() => bootScreen.classList.add('hidden'), 500);
-            }, 3000);
-        });
-
-        // --- 2. ЛОГИКА МЕНЮ ПУСК ---
-        function toggleStartMenu() {
-            const menu = document.getElementById('start-menu');
-            const isVisible = menu.style.display === 'flex';
-            menu.style.display = isVisible ? 'none' : 'flex';
-        }
-
-        // Закрывать меню при клике по рабочему столу
-        document.getElementById('desktop').addEventListener('click', function(e) {
-            // Если кликнули не по кнопке Пуск, закрываем меню
-            if (!e.target.closest('#start-button')) {
-                document.getElementById('start-menu').style.display = 'none';
-            }
-        });
-
-        // --- 3. ЛОГИКА ОКОН (OPEN/CLOSE/FOCUS) ---
-        let highestZ = 100;
-
-        function openWindow(id) {
-            const win = document.getElementById(id);
-            win.classList.remove('hidden');
-            bringToFront(win);
-            document.getElementById('start-menu').style.display = 'none'; // Скрыть Пуск
-        }
-
-        function closeWindow(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function bringToFront(win) {
-            highestZ++;
-            win.style.zindex = highestZ;
-        }
-
-        // --- 4. ЛОГИКА DRAG & DROP (ПЕРЕТАСКИВАНИЕ) ---
-        // Делаем все элементы с классом .window перетаскиваемыми за .window-header
-        const windows = document.querySelectorAll('.window');
-        
-        windows.forEach(win => {
-            const header = win.querySelector('.window-header');
-            let isDragging = false;
-            let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
-
-            // Определяем начальную позицию из style (если есть)
-            if (win.style.left) xOffset = parseInt(win.style.left);
-            if (win.style.top) yOffset = parseInt(win.style.top);
-
-            header.addEventListener('mousedown', dragStart);
-            win.addEventListener('mousedown', () => bringToFront(win)); // Фокус при клике на окно
-
-            function dragStart(e) {
-                // Разрешить тащить только если кликнули по заголовку, а не по кнопкам
-                if (e.target.closest('.window-controls')) return;
-
-                initialX = e.clientX - xOffset;
-                initialY = e.clientY - yOffset;
-                isDragging = true;
+        // ЛОГИКА ЗАГРУЗКИ: Boot -> Welcome -> Desktop
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('boot-screen').style.display = 'none';
+                const welcome = document.getElementById('welcome-screen');
+                welcome.style.display = 'flex';
                 
-                // Добавляем слушатели на document, чтобы мышь не "срывалась"
-                document.addEventListener('mousemove', drag);
-                document.addEventListener('mouseup', dragEnd);
-            }
+                setTimeout(() => {
+                    welcome.style.display = 'none';
+                    document.getElementById('desktop').style.display = 'flex';
+                }, 2000);
+            }, 3500);
+        };
 
-            function drag(e) {
-                if (isDragging) {
-                    e.preventDefault();
-                    currentX = e.clientX - initialX;
-                    currentY = e.clientY - initialY;
-                    xOffset = currentX;
-                    yOffset = currentY;
-                    
-                    // Ограничение, чтобы окно не уходило за верх
-                    if (currentY < 0) currentY = 0;
-
-                    win.style.left = currentX + "px";
-                    win.style.top = currentY + "px";
-                }
-            }
-
-            function dragEnd() {
-                isDragging = false;
-                document.removeEventListener('mousemove', drag);
-                document.removeEventListener('mouseup', dragEnd);
-            }
-        });
-
-        // --- 5. ЛОГИКА БРАУЗЕРА IE ---
-        function loadIframeUrl() {
-            const input = document.getElementById('ie-url');
-            const frame = document.getElementById('ie-frame');
-            let url = input.value;
-
-            // Добавляем http если нет
-            if (!/^https?:\/\//i.test(url)) {
-                url = 'https://' + url;
-                input.value = url;
-            }
-
-            // Примечание: Многие сайты (Google, VK) запрещают встраивание в iframe (X-Frame-Options)
-            // Wikipedia работает.
-            frame.src = url;
+        function toggleStart() {
+            const m = document.getElementById('start-menu');
+            m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // --- 6. СМЕНА ОБОЕВ ---
-        function setWallpaper(name) {
-            const desktop = document.getElementById('desktop');
-            const urls = {
-                'bliss': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bliss_%28Windows_XP%29.png/1280px-Bliss_%28Windows_XP%29.png',
-                'autumn': 'https://static1.srcdn.com/wordpress/wp-content/uploads/2023/11/windows-xp-autumn-wallpaper.jpg?q=50&fit=crop&w=825&dpr=1.5',
-                'azul': 'https://static1.srcdn.com/wordpress/wp-content/uploads/2023/11/windows-xp-azul-wallpaper.jpg?q=50&fit=crop&w=825&dpr=1.5'
+        function openApp(id) {
+            document.getElementById(id).style.display = 'flex';
+            document.getElementById('start-menu').style.display = 'none';
+        }
+
+        function closeApp(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // ПЕРЕТАСКИВАНИЕ ОКНА
+        function dragStart(e, id) {
+            const win = document.getElementById(id);
+            let shiftX = e.clientX - win.getBoundingClientRect().left;
+            let shiftY = e.clientY - win.getBoundingClientRect().top;
+
+            function moveAt(pageX, pageY) {
+                win.style.left = pageX - shiftX + 'px';
+                win.style.top = pageY - shiftY + 'px';
+            }
+
+            function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
+            document.addEventListener('mousemove', onMouseMove);
+            document.onmouseup = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.onmouseup = null;
             };
-            
-            if (urls[name]) {
-                desktop.style.backgroundImage = `url('${urls[name]}')`;
-            }
         }
 
-        // --- 7. ЧАСЫ В ТРЕЕ ---
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('clock').textContent = `${hours}:${minutes}`;
-        }
-        setInterval(updateClock, 1000);
-        updateClock(); // Сразу установить
-
+        // ЧАСЫ
+        setInterval(() => {
+            const d = new Date();
+            document.getElementById('clock').innerText = d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
+        }, 1000);
     </script>
 </body>
 </html>
